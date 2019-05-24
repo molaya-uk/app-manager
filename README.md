@@ -45,6 +45,97 @@ The code includes deployer_apps.yml file that contains tasks to deploy apps, the
 - templates - a list of template files found under $APP_Name/$template_directory/. The files have implicit .j2 extension and are saved to either $APP_Name/local/ or $APP_Name/default directory with .conf extension. On invocation, the playbook accepts *template_definition* veriable, which is used to load template veriables. This allows to load different set of veriables for different environments. A more secure alternative is use of Ansible Vault.
 - template_dest - specyfies whether templates should be saved to local or default directory within the app.
 
+## Invocation
+A sample invocation of the playbook could look as follow:
+
+    ssh-agent bash
+    ssh-add git_key
+    ssh-add remote_server_key
+    ansible-playbook -i hosts -e template_definition=production.yml main.yml
+    
+## App Structure
+The App and Add-on structure can be amended to include Ansible templates. *header.yml* includes *template_directory* veriable that defines directory name to be used for templates for all the apps. The default value is *templates*. A sample app structure would be similar to the following:
+
+    my_sample_app ---- default/app.conf
+                  |
+                  |--- local/server.conf
+                  |          inputs.conf
+                  |
+                  |--- templates/passwords.j2
+                  
+## Extending the playbook to accomodate multiple environments
+The playbook can be easily adjusted various deployment options. For example, the script could be extended to support two Indexer clusters (e.g., Prod and Pre-prod), mangaged via master-apps by copying and modyfing the existing play.
+
+Default Play:
+
+    - hosts: cluster_master
+      tags: [ master ] 
+      remote_user: "{{ remote_ansible_user }}"
+      become: "{{ remote_become }}"
+      become_user: "{{ remote_become_user }}"
+      vars_files:
+      - header.yml
+      - manifest.yml
+      tasks:
+      - name: load the environment file
+        include_vars:
+          file: "{{ template_definition }}"
+        when: template_definition is defined
+      - include_tasks: "tasks/clear_master.yml"
+        when: remove_before_copying
+      - include_tasks: "tasks/master_apps.yml"
+        with_subelements:
+        - "{{ manifest }}"
+        - server_tags
+        when: item.1 == 'master' or item.1 == 'all'
+      - include_tasks: "tasks/master_apply.yml"
+
+Modyfied Play:
+
+    - hosts: production_cluster_master
+      tags: [ prod_master ] 
+      remote_user: "{{ remote_ansible_user }}"
+      become: "{{ remote_become }}"
+      become_user: "{{ remote_become_user }}"
+      vars_files:
+      - header.yml
+      - manifest.yml
+      tasks:
+      - name: load the environment file
+        include_vars:
+          file: "{{ template_definition }}"
+        when: template_definition is defined
+      - include_tasks: "tasks/clear_master.yml"
+        when: remove_before_copying
+      - include_tasks: "tasks/master_apps.yml"
+        with_subelements:
+        - "{{ manifest }}"
+        - server_tags
+        when: item.1 == 'prod_master' or item.1 == 'prod_all'
+      - include_tasks: "tasks/master_apply.yml"
+      
+    - hosts: pre_cluster_master
+      tags: [ pre_master ] 
+      remote_user: "{{ remote_ansible_user }}"
+      become: "{{ remote_become }}"
+      become_user: "{{ remote_become_user }}"
+      vars_files:
+      - header.yml
+      - manifest.yml
+      tasks:
+      - name: load the environment file
+        include_vars:
+          file: "{{ template_definition }}"
+        when: template_definition is defined
+      - include_tasks: "tasks/clear_master.yml"
+        when: remove_before_copying
+      - include_tasks: "tasks/master_apps.yml"
+        with_subelements:
+        - "{{ manifest }}"
+        - server_tags
+        when: item.1 == 'pre_master' or item.1 == 'pre_all'
+      - include_tasks: "tasks/master_apply.yml"
+
 
 
 
