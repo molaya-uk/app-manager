@@ -1,0 +1,117 @@
+### Splunk App Deployment Playbook ###
+#
+# Pull a Git repo that will be used to distribute apps
+#
+- hosts: localhost
+  tags: [ repo_pull ]
+  remote_user: "{{ localhost_user }}"
+  vars_files:
+  - header.yml
+  tasks:
+  - name: pull git repo
+    git:
+      repo: "{{ git_repo_location }}"
+      dest: "{{ git_repo_destination }}"
+      version: "{{ git_version }}"
+      update: yes
+      accept_hostkey: yes
+    when: use_repo
+
+#
+# A Play to deploy apps to shcluster/apps and apply shcluster-bundle
+#
+- hosts: deployer
+  tags: [ deployer ]
+  remote_user: "{{ remote_ansible_user }}"
+  become: "{{ remote_become }}"
+  become_user: "{{ remote_become_user }}"
+  vars_files:
+  - header.yml
+  - manifest.yml
+  tasks:
+  - name: load the environment file
+    include_vars:
+      file: "{{ template_definition }}"
+    when: template_definition is defined
+  - include_tasks: "tasks/clear_deployer.yml"
+    when: remove_before_copying
+  - include_tasks: "tasks/deployer_apps.yml"
+    with_subelements:
+    - "{{ manifest }}"
+    - server_tags
+    when: item.1 == 'deployer' or item.1 == 'all'
+  - include_tasks: "tasks/deployer_apply.yml"
+#
+# A play to deploy apps to master-apps and apply the bundle
+#
+- hosts: cluster_master
+  tags: [ master ] 
+  remote_user: "{{ remote_ansible_user }}"
+  become: "{{ remote_become }}"
+  become_user: "{{ remote_become_user }}"
+  vars_files:
+  - header.yml
+  - manifest.yml
+  tasks:
+  - name: load the environment file
+    include_vars:
+      file: "{{ template_definition }}"
+    when: template_definition is defined
+  - include_tasks: "tasks/clear_master.yml"
+    when: remove_before_copying
+  - include_tasks: "tasks/master_apps.yml"
+    with_subelements:
+    - "{{ manifest }}"
+    - server_tags
+    when: item.1 == 'master' or item.1 == 'all'
+  - include_tasks: "tasks/master_apply.yml"
+
+#
+# A play to deploy apps to deployment-apps and reload the deployment server
+#
+- hosts: deployment_server
+  tags: [ deployment ]
+  remote_user: "{{ remote_ansible_user }}"
+  become: "{{ remote_become }}"
+  become_user: "{{ remote_become_user }}"
+  vars_files:
+  - header.yml
+  - manifest.yml
+  tasks:
+  - name: load the environment file
+    include_vars:
+      file: "{{ template_definition }}"
+    when: template_definition is defined
+  - include_tasks: "tasks/clear_deployment.yml"
+    when: remove_before_copying
+  - include_tasks: "tasks/deployment_apps.yml"
+    with_subelements:
+    - "{{ manifest }}"
+    - server_tags
+    when: item.1 == 'deployment' or item.1 == 'all'
+  - include_tasks: "tasks/deployment_reload.yml"
+
+#
+# A play to deploy apps into etc/apps and restart a Splunk intance
+#
+- hosts: deployment_server
+  tags: [ etc ]
+  remote_user: "{{ remote_ansible_user }}"
+  become: "{{ remote_become }}"
+  become_user: "{{ remote_become_user }}"
+  vars_files:
+  - header.yml
+  - manifest.yml
+  tasks:
+  - name: load the environment file
+    include_vars:
+      file: "{{ template_definition }}"
+    when: template_definition is defined
+  - include_tasks: "tasks/clear_etc_apps.yml"
+    when: remove_before_copying
+  - include_tasks: "tasks/etc_apps.yml"
+    with_subelements:
+    - "{{ manifest }}"
+    - server_tags
+    when: item.1 == 'etc_apps' or item.1 == 'all'
+  - include_tasks: "tasks/etc_restart.yml"

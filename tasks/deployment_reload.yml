@@ -1,0 +1,2 @@
+- name: reload deployment
+  shell: "{{ splunk_home }}/bin/splunk reload deploy-server"

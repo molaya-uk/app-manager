@@ -1,0 +1,3 @@
+- name: empty shcluster directory
+  shell: "/bin/rm -rf {{ splunk_home }}/etc/deployment-apps/*"
+

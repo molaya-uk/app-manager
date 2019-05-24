@@ -1,0 +1,15 @@
+- name: ensure tmp dir is present
+  file:
+    path: "{{ ansible_tmp }}"
+    state: directory
+
+- name: backup files
+  shell: "if [ -d {{ splunk_home }}/etc/apps/{{ item }} ]; then cp -r {{ splunk_home }}/etc/apps/{{ item }} {{ ansible_tmp }}/; fi"
+  with_items:
+  - "{{ splunk_default_apps }}"
+
+- name: empty shcluster directory
+  shell: "/bin/rm -rf {{ splunk_home }}/etc/apps/*"
+
+- name: restore default apps
+  shell: "mv {{ ansible_tmp }}/* {{ splunk_home }}/etc/apps/"

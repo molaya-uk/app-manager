@@ -1,0 +1,26 @@
+### Global Settings ###
+# Git Settings and Apps location
+git_repo_location: https://repo.local/apps.git # Your Git repo containing apps and add-ons
+git_version: HEAD                              # Branch, Commit, etc.
+git_repo_destination: /tmp/splunk_apps         # Directory where repo should be saved to
+localhost_user: vagrant                        # A local host user that will be used to pull the git repo. Use ssh keys for authentication with Git
+use_repo: true                                 # If you do not wish to pull the repo as part of the playbook, set to false
+template_directory: templates                  # Directory name used for templates in Splunk Apps and Add-ons
+
+# Remote Settings
+remote_ansible_user: vagrant                   # Remote Server / Splunk server user
+remote_become: true                            # Set to true if su to another user is required
+remote_become_user: splunk                     # If remote_become is set to true, define su user
+ansible_tmp: "{{ splunk_home }}/ansible"       # A temp directory location for backing up default apps
+remove_before_copying: true                    # If true playbook removes apps before copying
+remove_cluster_app: false                      # If true removes $SPLUNK_HOME/etc/master-apps/_cluster
+
+# Splunk Settings
+splunk_home: /opt/splunk                       # Splunk home directory
+# The list of (default) apps that will be backed up and restored when cleaning etc/apps.
+splunk_default_apps: ['alert_logevent', 'appsbrowser', 'framework', 'introspection_generator_addon', 'learned', 'sample_app', 'splunk_archiver', 'splunk_httpinput', 'SplunkLightForwarder', 'user-prefs', 'alert_webhook', 'gettingstarted', 'launcher', 'legacy', 'search', 'SplunkForwarder', 'splunk_instrumentation', 'splunk_monitoring_console']
+preserve_lookups: "true"                       # Preserve lookups value for 'apply shcluster-bundle'
+shcluster_bundle_target: "https://sh1:8089"    # Default Search Head cluster to be used as part of 'apply shcluster-bundle'
+# In production environment the below attributes should be defined in the vault
+splunk_user: admin                             # Splunk Admin user, should be stored in vault
+splunk_password: foo                           # Splunk Admin password, should be stored in vault

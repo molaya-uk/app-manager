@@ -1,0 +1,26 @@
+manifest:
+  - description: Sample App A
+    src: splunk_test_app_a
+    dest: splunk_test_app_a
+    server_tags: ['deployer', 'search head', 'indexer']
+    templates: []
+ 
+  - description: Sample App B with a template
+    src: splunk_test_app_b
+    dest: splunk_test_app_b
+    # template_dest must be either default or local and must be defined if templates are defined
+    template_dest: default
+    server_tags: ['deployer', 'master', 'deployment' ]
+    templates: ['app']
+
+  - description: contains shc integration to indexer cluster
+    src: shcluster_base
+    dest: shcluster_base
+    server_tags: ['deployer']
+
+  - description: contains log forwarding configuration
+    src: log_forwarding
+    dest: log_forwarding
+    server_tags: ['deployer']
+
+
