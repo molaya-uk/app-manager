@@ -1,5 +1,5 @@
 # App Manager
-An Ansible based framework for managing app deployment for Splunk®.
+An Ansible based framework for managing app deployment for Splunk.
 
 ## Introduction
 The project contains a simple Ansible based framework that can be used to manage apps and add-ons for Splunk deployments. The main goal of the framework is to provide simple, flexible and extendable solution that can be easily adjusted for a particular platform.
